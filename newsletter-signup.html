@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newsletter Signup - QuietQuest</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 50px 40px;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="email"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input.error {
+            border-color: #e74c3c;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 13px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .checkbox-group {
+            margin: 25px 0;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .checkbox-label {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .privacy-note {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 20px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 40px 30px;
+            }
+
+            .header h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Join Our Newsletter</h1>
+            <p>Stay updated with the latest news, articles, and exclusive content delivered straight to your inbox.</p>
+        </div>
+
+        <div id="successMessage" class="success-message">
+            <strong>Success!</strong> You've been added to our newsletter. Check your email to confirm your subscription.
+        </div>
+
+        <form id="newsletterForm" novalidate>
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    placeholder="Enter your full name"
+                    required
+                >
+                <div class="error-message" id="nameError">Please enter your name</div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Enter your email address"
+                    required
+                >
+                <div class="error-message" id="emailError">Please enter a valid email address</div>
+            </div>
+
+            <div class="checkbox-group">
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="consent" name="consent" required>
+                    <label for="consent" class="checkbox-label">
+                        I agree to receive newsletters and understand I can unsubscribe at any time.
+                    </label>
+                </div>
+                <div class="error-message" id="consentError">Please accept to continue</div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                Subscribe Now
+            </button>
+
+            <p class="privacy-note">
+                We respect your privacy. Your information will never be shared with third parties.
+            </p>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('newsletterForm');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const consentCheckbox = document.getElementById('consent');
+        const submitBtn = document.getElementById('submitBtn');
+        const successMessage = document.getElementById('successMessage');
+
+        // Email validation regex
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        // Clear error when user starts typing
+        nameInput.addEventListener('input', () => clearError('name'));
+        emailInput.addEventListener('input', () => clearError('email'));
+        consentCheckbox.addEventListener('change', () => clearError('consent'));
+
+        function clearError(field) {
+            const input = document.getElementById(field);
+            const error = document.getElementById(field + 'Error');
+            input.classList.remove('error');
+            error.classList.remove('show');
+        }
+
+        function showError(field, message) {
+            const input = document.getElementById(field);
+            const error = document.getElementById(field + 'Error');
+            input.classList.add('error');
+            if (message) {
+                error.textContent = message;
+            }
+            error.classList.add('show');
+        }
+
+        function validateForm() {
+            let isValid = true;
+
+            // Validate name
+            if (nameInput.value.trim() === '') {
+                showError('name', 'Please enter your name');
+                isValid = false;
+            }
+
+            // Validate email
+            if (emailInput.value.trim() === '') {
+                showError('email', 'Please enter your email address');
+                isValid = false;
+            } else if (!emailRegex.test(emailInput.value.trim())) {
+                showError('email', 'Please enter a valid email address');
+                isValid = false;
+            }
+
+            // Validate consent
+            if (!consentCheckbox.checked) {
+                showError('consent', 'Please accept to continue');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Hide previous success message
+            successMessage.classList.remove('show');
+
+            // Validate form
+            if (!validateForm()) {
+                return;
+            }
+
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Subscribing...';
+
+            // Prepare form data
+            const formData = {
+                name: nameInput.value.trim(),
+                email: emailInput.value.trim(),
+                consent: consentCheckbox.checked,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                // TODO: Replace with your actual API endpoint
+                // Example API call:
+                // const response = await fetch('/api/newsletter/subscribe', {
+                //     method: 'POST',
+                //     headers: {
+                //         'Content-Type': 'application/json',
+                //     },
+                //     body: JSON.stringify(formData)
+                // });
+                //
+                // if (!response.ok) {
+                //     throw new Error('Subscription failed');
+                // }
+
+                // Simulate API call (remove this in production)
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                console.log('Newsletter signup data:', formData);
+
+                // Show success message
+                successMessage.classList.add('show');
+
+                // Reset form
+                form.reset();
+
+                // Re-enable button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Subscribe Now';
+
+                // Scroll to success message
+                successMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Something went wrong. Please try again later.');
+
+                // Re-enable button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Subscribe Now';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Counter - QuietQuest</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+            padding: 50px 40px;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .target-section {
+            margin-bottom: 30px;
+        }
+
+        .target-section label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .target-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .target-input-group input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .target-input-group input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .set-btn {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .set-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .counter-display {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .count {
+            font-size: 72px;
+            font-weight: 700;
+            color: #333;
+            line-height: 1;
+            margin-bottom: 10px;
+            transition: transform 0.2s ease;
+        }
+
+        .count.pulse {
+            animation: pulse 0.3s ease;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .target-display {
+            color: #666;
+            font-size: 18px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 6px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            font-size: 28px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn.minus {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .control-btn.minus:hover {
+            background: #e0e0e0;
+            transform: scale(1.1);
+        }
+
+        .control-btn.plus {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .control-btn.plus:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 14px;
+            background: #f0f0f0;
+            color: #666;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+            text-align: center;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+            animation: celebrate 0.5s ease-out;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 40px 30px;
+            }
+
+            .header h1 {
+                font-size: 28px;
+            }
+
+            .count {
+                font-size: 56px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Counter</h1>
+            <p>Set a target and count your way there!</p>
+        </div>
+
+        <div id="successMessage" class="success-message">
+            You've reached your target!
+        </div>
+
+        <div class="target-section">
+            <label for="targetInput">Set Target Number</label>
+            <div class="target-input-group">
+                <input type="number" id="targetInput" min="1" value="10" placeholder="Enter target">
+                <button class="set-btn" id="setBtn">Set</button>
+            </div>
+        </div>
+
+        <div class="counter-display">
+            <div class="count" id="countDisplay">0</div>
+            <div class="target-display">of <span id="targetDisplay">10</span></div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn minus" id="minusBtn">-</button>
+            <button class="control-btn plus" id="plusBtn">+</button>
+        </div>
+
+        <button class="reset-btn" id="resetBtn">Reset Counter</button>
+    </div>
+
+    <script>
+        let count = 0;
+        let target = 10;
+
+        const countDisplay = document.getElementById('countDisplay');
+        const targetDisplay = document.getElementById('targetDisplay');
+        const targetInput = document.getElementById('targetInput');
+        const progressFill = document.getElementById('progressFill');
+        const successMessage = document.getElementById('successMessage');
+        const plusBtn = document.getElementById('plusBtn');
+        const minusBtn = document.getElementById('minusBtn');
+        const setBtn = document.getElementById('setBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        function updateDisplay() {
+            countDisplay.textContent = count;
+
+            // Add pulse animation
+            countDisplay.classList.remove('pulse');
+            void countDisplay.offsetWidth; // Trigger reflow
+            countDisplay.classList.add('pulse');
+
+            // Update progress bar
+            const progress = Math.min((count / target) * 100, 100);
+            progressFill.style.width = progress + '%';
+
+            // Update button states
+            minusBtn.disabled = count <= 0;
+            plusBtn.disabled = count >= target;
+
+            // Check if target reached
+            if (count >= target) {
+                successMessage.classList.add('show');
+            } else {
+                successMessage.classList.remove('show');
+            }
+        }
+
+        function setTarget() {
+            const newTarget = parseInt(targetInput.value);
+            if (newTarget && newTarget > 0) {
+                target = newTarget;
+                targetDisplay.textContent = target;
+                count = 0;
+                updateDisplay();
+            }
+        }
+
+        function increment() {
+            if (count < target) {
+                count++;
+                updateDisplay();
+            }
+        }
+
+        function decrement() {
+            if (count > 0) {
+                count--;
+                updateDisplay();
+            }
+        }
+
+        function reset() {
+            count = 0;
+            updateDisplay();
+        }
+
+        // Event listeners
+        plusBtn.addEventListener('click', increment);
+        minusBtn.addEventListener('click', decrement);
+        setBtn.addEventListener('click', setTarget);
+        resetBtn.addEventListener('click', reset);
+
+        // Allow Enter key to set target
+        targetInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                setTarget();
+            }
+        });
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (e.target === targetInput) return;
+
+            if (e.key === 'ArrowUp' || e.key === '+' || e.key === '=') {
+                increment();
+            } else if (e.key === 'ArrowDown' || e.key === '-') {
+                decrement();
+            } else if (e.key === 'r' || e.key === 'R') {
+                reset();
+            }
+        });
+
+        // Initialize display
+        updateDisplay();
+    </script>
+</body>
+</html>

@@ -1,204 +1,161 @@
-# QuietQuest Newsletter Signup
+# QuietQuest
 
-A modern, responsive newsletter signup page with client-side validation and ready-to-integrate backend support.
+One conversation, every project.
 
-## Features
+QuietQuest is a personal agent harness built around a project manager. You talk to a single
+agent. It turns what you tell it into projects and tasks, starts worker agents to do the work,
+reviews what they hand back, and tells you only what needs you. A live dashboard shows every
+project, task, and worker, so you can watch without managing threads.
 
-- **Clean, Modern Design**: Beautiful gradient background with smooth animations
-- **Fully Responsive**: Works perfectly on desktop, tablet, and mobile devices
-- **Form Validation**: Real-time email validation and error handling
-- **User-Friendly**: Clear error messages and success feedback
-- **Privacy-Focused**: Includes consent checkbox and privacy notice
-- **No Dependencies**: Pure HTML, CSS, and JavaScript - no build tools required
+![The QuietQuest dashboard: conversation on the left, board in the middle, a live worker on the right](docs/dashboard.png)
 
-## Quick Start
+It runs on the subscriptions you already pay for. The manager and the workers are sessions of
+the official **Claude Code** and **OpenAI Codex** command-line tools, signed in with your Claude
+and ChatGPT plans. QuietQuest never sees or stores your credentials.
 
-1. Open `newsletter-signup.html` in any web browser
-2. The page works standalone without any server setup
+## Quick start
 
-## File Structure
+Requires Node.js 20 or newer on macOS or Linux (Windows through WSL). There is nothing to
+install: the project has no dependencies.
 
-```
-quietquest/
-├── newsletter-signup.html   # Main newsletter signup page
-└── README.md               # This file
-```
+```bash
+git clone https://github.com/aibusinessfrontier2025/quietquest.git
+cd quietquest
 
-## Backend Integration
-
-The form is ready to connect to your backend API. Follow these steps:
-
-### 1. API Endpoint Setup
-
-In the JavaScript section of `newsletter-signup.html` (around line 285), replace the TODO comment with your actual API call:
-
-```javascript
-// Replace this section:
-const response = await fetch('/api/newsletter/subscribe', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(formData)
-});
-
-if (!response.ok) {
-    throw new Error('Subscription failed');
-}
+npm run demo      # look around first: sample board, scripted workers, no subscription used
+npm run doctor    # check that the CLIs are installed and signed in
+npm start         # the real thing, at http://127.0.0.1:4747
 ```
 
-### 2. Form Data Structure
+Sign in once to whichever providers you want to use. One is enough.
 
-The form sends the following JSON data:
+| Provider | Install | Sign in |
+| --- | --- | --- |
+| Claude | `npm i -g @anthropic-ai/claude-code` | run `claude`, then `/login` with your Claude plan |
+| OpenAI | `npm i -g @openai/codex` | run `codex login` with your ChatGPT plan |
 
-```json
-{
-    "name": "John Doe",
-    "email": "john@example.com",
-    "consent": true,
-    "timestamp": "2026-01-10T12:00:00.000Z"
-}
+Then tell the manager what you are working on:
+
+> Plan five days in Lisbon in March for two, under €2,400. Start with flights and where to stay.
+
+> In ~/code/my-app, find out why the test suite is flaky and fix the worst offender.
+
+## What you see
+
+- **Conversation** (left). The only thread you manage. The manager's actions appear inline as
+  small check-marked lines; worker reports appear as one-line events you can open.
+- **Needs you**. Approval requests from workers and tasks that are blocked on you, in one place.
+- **Working now**. Every live worker with its current step, elapsed time, and which subscription
+  it runs on.
+- **Projects**. Each project with a progress bar and its tasks. Select a task to open the worker
+  that handled it.
+- **Worker detail** (right). The full transcript: the brief the manager wrote, every tool call
+  with its input and output, and the final report. You can send the worker a follow-up or stop it.
+- **Settings**. Which provider and model run the manager and the workers, how much workers may do
+  without asking, concurrency limits, and the manager's memory about you.
+
+## How it works
+
+```
+ you ──chat──▶ manager (one long-lived CLI session, read-only tools + the board tools)
+                  │  create_project · create_tasks · spawn_worker · message_worker · update_task …
+                  ▼
+              QuietQuest daemon ──────────────▶ dashboard (HTTP + server-sent events)
+                  │  queue, concurrency limit, approvals, transcripts, state on disk
+                  ▼
+              workers (one CLI session each, in the project's folder)
+                  │  final report
+                  └──────────▶ back to the manager as an event, which reviews and decides what is next
 ```
 
-### 3. Backend Requirements
+- **The manager delegates.** It runs with read-only tools plus a set of board tools that the daemon
+  serves over MCP (`src/mcp-bridge.js`). It cannot edit files or run commands itself.
+- **Workers start cold.** A worker sees the project's goal and notes, its task, and the brief the
+  manager wrote. Each project has its own folder that its workers share; pass an existing
+  path (for example a repository) when you describe the project and it is used instead.
+- **Reports close the loop.** When a worker stops, its report is queued for the manager, which
+  marks the task done, sends a follow-up, starts the next task, or flags it as blocked. Events that
+  arrive while the manager is busy are batched into its next turn.
+- **Sessions resume.** Both the manager and each worker keep their CLI session, so a follow-up
+  continues with full context.
+- **Every turn starts from the truth.** The manager's prompt opens with a snapshot of the board, so
+  it stays accurate even after a restart or a compacted conversation.
 
-Your API endpoint should:
-- Accept POST requests
-- Expect JSON payload with the structure above
-- Return appropriate HTTP status codes:
-  - `200` or `201` for successful subscription
-  - `400` for validation errors
-  - `500` for server errors
-- Handle duplicate email addresses gracefully
+### Autonomy and approvals
 
-### 4. Popular Backend Integrations
+Each worker runs at one of three levels. The manager picks per task; the default is in Settings.
 
-#### Mailchimp
-```javascript
-const response = await fetch('https://YOUR_MAILCHIMP_ENDPOINT', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-        email_address: formData.email,
-        status: 'subscribed',
-        merge_fields: {
-            FNAME: formData.name.split(' ')[0],
-            LNAME: formData.name.split(' ').slice(1).join(' ')
-        }
-    })
-});
+| Level | Claude worker | Codex worker |
+| --- | --- | --- |
+| `read` | may read and search the web; anything else is denied | `read-only` sandbox |
+| `edit` (default) | file edits are accepted; anything else that needs permission becomes an approval card | `workspace-write` sandbox (no approval cards; blocked actions fail) |
+| `full` | no permission checks | `danger-full-access` sandbox |
+
+On an approval card you can allow once, allow that tool for the rest of the worker's run, or deny.
+Workers use your normal CLI configuration, including any allow rules, MCP servers, and skills you
+have set up for Claude Code or Codex.
+
+### Using your subscriptions, not API credit
+
+QuietQuest starts the CLIs as child processes and reads their JSON event streams. By default it
+removes `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` from the workers' environment so that usage is
+billed to your plan login rather than to an API key. Set `providers.<name>.useApiKey` to `true` in
+`config.json` if you want the opposite. The provider pills in the top bar show sign-in state, and
+for Claude the share of your plan limit used, as reported by the CLI.
+
+Two limits guard against a runaway loop: `workers.maxConcurrent` (default 4) and
+`workers.maxSpawnsPerHour` (default 30).
+
+## Where things live
+
+Everything is plain files under `~/.quietquest` (override with `--home` or `QUIETQUEST_HOME`).
+
+| Path | Contents |
+| --- | --- |
+| `config.json` | settings |
+| `state.json` | projects, tasks, workers, approvals |
+| `chat.jsonl` | the conversation |
+| `memory.md` | what the manager remembers about you; edit it freely |
+| `agents/<id>.jsonl` | each worker's transcript |
+| `workspaces/<project>/` | project folders created for you |
+
+Source layout:
+
+| Path | Role |
+| --- | --- |
+| `bin/quietquest.js` | command-line entry point |
+| `src/manager.js` | the conversation loop and turn queue |
+| `src/workers.js` | worker lifecycle, scheduling, approvals |
+| `src/tools.js` | the manager's tools |
+| `src/providers/` | Claude and Codex adapters, plus the scripted mock used by the demo and tests |
+| `src/mcp-bridge.js` | stdio MCP server the CLIs launch to reach the daemon |
+| `src/server.js` | HTTP API, event stream, static files |
+| `web/` | the dashboard (no build step) |
+
+## Security
+
+- The server binds to `127.0.0.1` only and refuses requests whose `Host` is not loopback.
+- State-changing requests must be JSON and same-origin, so another website open in your browser
+  cannot drive the manager.
+- The tool bridge authenticates to the daemon with a random token generated at each start.
+- Model output is rendered through an escaping markdown renderer; it never becomes markup.
+
+Workers act on your machine with your account. `edit` is a sensible default; use `full` only for
+projects where you would run the CLI that way yourself.
+
+## Status
+
+Verified end to end against the real Claude Code CLI: manager turns, the tool bridge, workers,
+session resume, review turns, and approval cards. The Codex adapter is built against the Codex
+CLI's flags and event format and is covered by parser and argument tests, and the tool-bridge
+configuration was confirmed to load in Codex, but it has not yet been run with a signed-in ChatGPT
+account.
+
+```bash
+npm test
 ```
 
-#### SendGrid
-```javascript
-const response = await fetch('https://api.sendgrid.com/v3/marketing/contacts', {
-    method: 'PUT',
-    headers: {
-        'Authorization': 'Bearer YOUR_API_KEY',
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-        contacts: [{
-            email: formData.email,
-            first_name: formData.name.split(' ')[0],
-            last_name: formData.name.split(' ').slice(1).join(' ')
-        }]
-    })
-});
-```
+## Also in this repository
 
-#### Custom Node.js Backend
-```javascript
-// Example Express.js endpoint
-app.post('/api/newsletter/subscribe', async (req, res) => {
-    const { name, email, consent } = req.body;
-
-    // Validate input
-    if (!name || !email || !consent) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    // Save to database
-    try {
-        await db.subscribers.insert({ name, email, consent, createdAt: new Date() });
-        res.status(201).json({ message: 'Successfully subscribed' });
-    } catch (error) {
-        res.status(500).json({ error: 'Subscription failed' });
-    }
-});
-```
-
-## Customization
-
-### Colors
-The page uses a purple gradient theme. To change colors, modify these CSS variables:
-
-```css
-/* Background gradient */
-background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-
-/* Button gradient */
-background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-
-/* Focus color */
-border-color: #667eea;
-```
-
-### Text Content
-Edit the content directly in the HTML:
-- Title: Line 44 (`<h1>Join Our Newsletter</h1>`)
-- Description: Line 45 (`<p>Stay updated...</p>`)
-- Privacy note: Line 106-108
-
-### Form Fields
-To add additional fields (e.g., phone number, company), follow the existing pattern:
-
-```html
-<div class="form-group">
-    <label for="company">Company</label>
-    <input
-        type="text"
-        id="company"
-        name="company"
-        placeholder="Enter your company name"
-    >
-    <div class="error-message" id="companyError">Please enter your company</div>
-</div>
-```
-
-## Browser Support
-
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-- Mobile browsers (iOS Safari, Chrome Mobile)
-
-## Security Considerations
-
-1. **HTTPS**: Always serve this page over HTTPS in production
-2. **CORS**: Configure CORS properly on your API endpoint
-3. **Rate Limiting**: Implement rate limiting on your backend to prevent abuse
-4. **Email Verification**: Send confirmation emails to verify addresses
-5. **GDPR Compliance**: Ensure consent checkbox meets legal requirements
-6. **Input Sanitization**: Sanitize all inputs on the backend
-
-## Testing
-
-To test the form:
-1. Open the page in a browser
-2. Try submitting without filling fields (validation should trigger)
-3. Enter an invalid email (should show error)
-4. Submit without checking consent (should show error)
-5. Fill all fields correctly and submit
-6. Check browser console for the logged form data
-
-## License
-
-This project is open source and available for use in your projects.
-
-## Support
-
-For issues or questions, please create an issue in the repository.
+`newsletter-signup.html` is a standalone newsletter signup page; its notes are in
+[docs/newsletter-signup.md](docs/newsletter-signup.md).

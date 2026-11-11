@@ -1,0 +1,19 @@
+{
+  "name": "quietquest",
+  "version": "0.1.0",
+  "description": "A personal project-manager agent harness: talk to one agent, it runs the workers.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "quietquest": "bin/quietquest.js"
+  },
+  "scripts": {
+    "start": "node bin/quietquest.js",
+    "demo": "node bin/quietquest.js --demo",
+    "doctor": "node bin/quietquest.js doctor",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

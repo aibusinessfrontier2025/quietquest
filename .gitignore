@@ -1,0 +1,4 @@
+node_modules/
+.quietquest/
+*.log
+.DS_Store
